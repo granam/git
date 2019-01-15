@@ -26,7 +26,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_diff_against_origin(): void
     {
-        self::assertNotEmpty($this->getGit()->getDiffAgainstOriginMaster(), 'Expected some output even if there is no diff');
+        self::assertIsArray($this->getGit()->getDiffAgainstOriginMaster());
     }
 
     /**
