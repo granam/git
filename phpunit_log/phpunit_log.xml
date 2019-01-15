@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="all" tests="2" assertions="2" errors="0" failures="0" skipped="0" time="0.009639">
+    <testsuite name="Granam\Tests\Git\GitExceptionsHierarchyTest" file="/home/jaroslav/projects/granam/git/Granam/Tests/Git/GitExceptionsHierarchyTest.php" tests="2" assertions="2" errors="0" failures="0" skipped="0" time="0.009639">
+      <testcase name="My_exceptions_are_in_family_tree" class="Granam\Tests\Git\GitExceptionsHierarchyTest" classname="Granam.Tests.Git.GitExceptionsHierarchyTest" file="/home/jaroslav/projects/granam/git/Granam/Tests/Git/GitExceptionsHierarchyTest.php" line="72" assertions="1" time="0.005529"/>
+      <testcase name="My_exceptions_are_used" class="Granam\Tests\Git\GitExceptionsHierarchyTest" classname="Granam.Tests.Git.GitExceptionsHierarchyTest" file="/home/jaroslav/projects/granam/git/Granam/Tests/Git/GitExceptionsHierarchyTest.php" line="81" assertions="1" time="0.004110"/>
+    </testsuite>
+  </testsuite>
+</testsuites>
