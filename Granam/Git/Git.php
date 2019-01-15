@@ -13,17 +13,20 @@ class Git extends StrictObject
     public const EXCLUDE_REMOTE_BRANCHES = false;
 
     /**
+     * @param string $dir
      * @return array|string[] Rows with GIT status
      * @throws \Granam\Git\Exceptions\CanNotGetGitStatus
      */
-    public function getGitStatus(): array
+    public function getGitStatus(string $dir): array
     {
         // GIT status is same for any working dir, if it is a sub-dir of wanted GIT project root
         try {
-            return $this->executeArray('git status');
+            $escapedDir = \escapeshellarg($dir);
+
+            return $this->executeArray("git -C $escapedDir status");
         } catch (Exceptions\ExecutingCommandFailed $executingCommandFailed) {
             throw new Exceptions\CanNotGetGitStatus(
-                "Can not get git status:\n"
+                "Can not get git status from dir $dir:\n"
                 . $executingCommandFailed->getMessage(),
                 $executingCommandFailed->getCode(),
                 $executingCommandFailed
@@ -32,13 +35,16 @@ class Git extends StrictObject
     }
 
     /**
+     * @param string $dir
      * @return array|string[] Rows with differences
      * @throws \Granam\Git\Exceptions\CanNotGetGitDiff
      */
-    public function getDiffAgainstOriginMaster(): array
+    public function getDiffAgainstOriginMaster(string $dir): array
     {
         try {
-            return $this->executeArray('git diff origin/master');
+            $escapedDir = \escapeshellarg($dir);
+
+            return $this->executeArray("git -C $escapedDir diff origin/master");
         } catch (Exceptions\ExecutingCommandFailed $executingCommandFailed) {
             throw new Exceptions\CanNotGetGitDiff(
                 "Can not get diff:\n"
@@ -95,17 +101,17 @@ class Git extends StrictObject
 
     /**
      * @param string $branch
-     * @param string $destinationDir
+     * @param string $dir
      * @return array|string[] Rows with result of branch update
      * @throws \Granam\Git\Exceptions\CanNotLocallyCloneWebVersionViaGit
      * @throws \Granam\Git\Exceptions\UnknownMinorVersion
      */
-    public function updateBranch(string $branch, string $destinationDir): array
+    public function updateBranch(string $branch, string $dir): array
     {
         $branchEscaped = \escapeshellarg($branch);
-        $destinationDirEscaped = \escapeshellarg($destinationDir);
+        $dirEscaped = \escapeshellarg($dir);
         $commands = [];
-        $commands[] = "cd $destinationDirEscaped";
+        $commands[] = "cd $dirEscaped";
         $commands[] = "git checkout $branchEscaped";
         $commands[] = 'git pull --ff-only';
         $commands[] = 'git pull --tags';
@@ -165,7 +171,7 @@ class Git extends StrictObject
      * @throws \Granam\Git\Exceptions\LocalOrRemoteBranchesShouldBeRequired
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getAllVersionLikeBranches(
+    public function getAllMinorVersionLikeBranches(
         string $dir,
         bool $local = self::INCLUDE_LOCAL_BRANCHES,
         bool $remote = self::INCLUDE_REMOTE_BRANCHES

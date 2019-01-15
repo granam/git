@@ -67,11 +67,11 @@ class GitTest extends TestCase
      * @param bool $includeLocalBranches
      * @param bool $includeRemoteBranches
      */
-    public function I_can_get_all_version_like_branches(bool $includeLocalBranches, bool $includeRemoteBranches): void
+    public function I_can_get_all_minor_version_like_branches(bool $includeLocalBranches, bool $includeRemoteBranches): void
     {
         self::assertContains(
             '1.0',
-            $this->getGit()->getAllVersionLikeBranches(__DIR__, $includeLocalBranches, $includeRemoteBranches)
+            $this->getGit()->getAllMinorVersionLikeBranches(__DIR__, $includeLocalBranches, $includeRemoteBranches)
         );
     }
 
@@ -90,6 +90,6 @@ class GitTest extends TestCase
      */
     public function I_can_not_exclude_both_local_and_remote_branches_when_asking_to_version_likes(): void
     {
-        $this->getGit()->getAllVersionLikeBranches(__DIR__, Git::EXCLUDE_LOCAL_BRANCHES, Git::EXCLUDE_REMOTE_BRANCHES);
+        $this->getGit()->getAllMinorVersionLikeBranches(__DIR__, Git::EXCLUDE_LOCAL_BRANCHES, Git::EXCLUDE_REMOTE_BRANCHES);
     }
 }
