@@ -7,6 +7,11 @@ use Granam\Strict\Object\StrictObject;
 
 class Git extends StrictObject
 {
+    public const INCLUDE_LOCAL_BRANCHES = true;
+    public const EXCLUDE_LOCAL_BRANCHES = false;
+    public const INCLUDE_REMOTE_BRANCHES = true;
+    public const EXCLUDE_REMOTE_BRANCHES = false;
+
     /**
      * @return array|string[] Rows with GIT status
      * @throws \Granam\Git\Exceptions\CanNotGetGitStatus
@@ -92,7 +97,6 @@ class Git extends StrictObject
      * @param string $branch
      * @param string $destinationDir
      * @return array|string[] Rows with result of branch update
-     * @throws \Granam\Git\Exceptions\CanNotUpdateWebVersionViaGit
      * @throws \Granam\Git\Exceptions\CanNotLocallyCloneWebVersionViaGit
      * @throws \Granam\Git\Exceptions\UnknownMinorVersion
      */
@@ -141,7 +145,7 @@ class Git extends StrictObject
      * @return array|string[] List of tags with patch versions like 1.12.321
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getPatchVersions(string $dir): array
+    public function getTagPatchVersions(string $dir): array
     {
         $dirEscaped = \escapeshellarg($dir);
         $commands = [
@@ -155,21 +159,40 @@ class Git extends StrictObject
 
     /**
      * @param string $dir
+     * @param bool $local
+     * @param bool $remote
      * @return array|string[] List of branches with minor versions like 1.12
+     * @throws \Granam\Git\Exceptions\LocalOrRemoteBranchesShouldBeRequired
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getAllVersionedBranches(string $dir): array
+    public function getAllVersionLikeBranches(
+        string $dir,
+        bool $local = self::INCLUDE_LOCAL_BRANCHES,
+        bool $remote = self::INCLUDE_REMOTE_BRANCHES
+    ): array
     {
+        if (!$local && !$remote) {
+            throw new Exceptions\LocalOrRemoteBranchesShouldBeRequired(
+                'Excluding both local and remote version-like branches has no sense'
+            );
+        }
         $dirEscaped = \escapeshellarg($dir);
-        $commands = [
-            "git -C $dirEscaped branch -r ",
+        $localVersions = [
+            "git -C $dirEscaped branch",
             'cut -d "/" -f2',
             'grep HEAD --invert-match',
             'grep -P "v?\d+\.\d+" --only-matching',
             'sort --version-sort --reverse',
         ];
+        $remoteVersions = $localVersions;
+        $remoteVersions[0] = "git -C $dirEscaped branch -r";
 
-        return $this->executeArray(\implode(' | ', $commands));
+        return \array_unique(
+            \array_merge(
+                $this->executeArray(\implode(' | ', $localVersions)),
+                $this->executeArray(\implode(' | ', $remoteVersions))
+            )
+        );
     }
 
     /**
