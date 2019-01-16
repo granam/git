@@ -230,12 +230,29 @@ class Git extends StrictObject
         }
         if (!$matchingPatchVersions) {
             throw new Exceptions\NoPatchVersionsMatch(
-                "No patch version matches given superior version $superiorVersion, available are only "
-                . ($patchVersions ? \implode(',', $patchVersions) : "'nothing'"));
+                sprintf(
+                    'No patch version matches given superior version %s, %s',
+                    $superiorVersion,
+                    $patchVersions
+                        ? 'available are only' . \implode(',', $patchVersions)
+                        : 'because there are no patch versions at all'
+                )
+            );
         }
         \usort($matchingPatchVersions, 'version_compare');
 
         return \end($matchingPatchVersions);
+    }
+
+    /**
+     * @param string $repositoryDir
+     * @return string
+     * @throws \Granam\Git\Exceptions\NoPatchVersionsMatch
+     * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
+     */
+    public function getLastTagPatchVersion(string $repositoryDir): string
+    {
+        return $this->getLastTagPatchVersionOf($this->getLastStableMinorVersion($repositoryDir), $repositoryDir);
     }
 
     /**

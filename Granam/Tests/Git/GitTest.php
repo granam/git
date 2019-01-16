@@ -104,9 +104,9 @@ class GitTest extends TestCase
     /**
      * @test
      */
-    public function I_can_get_last_patch_version(): void
+    public function I_can_get_last_patch_version_of_minor_version(): void
     {
-        self::assertNotEmpty($this->getGit()->getLastTagPatchVersionOf('1.0', __DIR__), 'Some last patch version expected');
+        self::assertNotEmpty($this->getGit()->getLastTagPatchVersionOf('1.0', __DIR__), 'Some last patch version to a minor version expected');
     }
 
     /**
@@ -118,4 +118,13 @@ class GitTest extends TestCase
     {
         $this->getGit()->getLastTagPatchVersionOf('999.999', __DIR__);
     }
+
+    /**
+     * @test
+     */
+    public function I_can_get_last_patch_version(): void
+    {
+        self::assertNotEmpty($this->getGit()->getLastTagPatchVersion(__DIR__), 'Some last patch version expected');
+    }
+
 }
