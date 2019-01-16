@@ -246,13 +246,20 @@ class Git extends StrictObject
 
     /**
      * @param string $repositoryDir
-     * @return string
-     * @throws \Granam\Git\Exceptions\NoPatchVersionsMatch
+     * @return string|null
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getLastPatchVersion(string $repositoryDir): string
+    public function getLastPatchVersion(string $repositoryDir): ?string
     {
-        return $this->getLastPatchVersionOf($this->getLastStableMinorVersion($repositoryDir), $repositoryDir);
+        $lastStableMinorVersion = $this->getLastStableMinorVersion($repositoryDir);
+        if ($lastStableMinorVersion === null) {
+            return null;
+        }
+        try {
+            return $this->getLastPatchVersionOf($lastStableMinorVersion, $repositoryDir);
+        } catch (Exceptions\NoPatchVersionsMatch $noPatchVersionsMatch) {
+            return null;
+        }
     }
 
     /**
