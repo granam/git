@@ -13,7 +13,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_git_status(): void
     {
-        self::assertNotEmpty($this->getGit()->getGitStatus(), 'Expected some GIT status');
+        self::assertNotEmpty($this->getGit()->getGitStatus(__DIR__), 'Expected some GIT status');
     }
 
     private function getGit(): Git
@@ -26,7 +26,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_diff_against_origin(): void
     {
-        self::assertIsArray($this->getGit()->getDiffAgainstOriginMaster());
+        self::assertIsArray($this->getGit()->getDiffAgainstOriginMaster(__DIR__));
     }
 
     /**
