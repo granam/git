@@ -56,9 +56,9 @@ class GitTest extends TestCase
     /**
      * @test
      */
-    public function I_can_get_tag_patch_versions(): void
+    public function I_can_get_patch_versions(): void
     {
-        self::assertNotEmpty($this->getGit()->getTagPatchVersions(__DIR__));
+        self::assertNotEmpty($this->getGit()->getPatchVersions(__DIR__));
     }
 
     /**
@@ -67,11 +67,11 @@ class GitTest extends TestCase
      * @param bool $includeLocalBranches
      * @param bool $includeRemoteBranches
      */
-    public function I_can_get_all_minor_version_like_branches(bool $includeLocalBranches, bool $includeRemoteBranches): void
+    public function I_can_get_all_minor_versions(bool $includeLocalBranches, bool $includeRemoteBranches): void
     {
         self::assertContains(
             '1.0',
-            $this->getGit()->getAllMinorVersionLikeBranches(__DIR__, $includeLocalBranches, $includeRemoteBranches)
+            $this->getGit()->getAllMinorVersions(__DIR__, $includeLocalBranches, $includeRemoteBranches)
         );
     }
 
@@ -88,9 +88,9 @@ class GitTest extends TestCase
      * @test
      * @expectedException \Granam\Git\Exceptions\LocalOrRemoteBranchesShouldBeRequired
      */
-    public function I_can_not_exclude_both_local_and_remote_branches_when_asking_to_version_likes(): void
+    public function I_can_not_exclude_both_local_and_remote_branches_when_asking_to_versions(): void
     {
-        $this->getGit()->getAllMinorVersionLikeBranches(__DIR__, Git::EXCLUDE_LOCAL_BRANCHES, Git::EXCLUDE_REMOTE_BRANCHES);
+        $this->getGit()->getAllMinorVersions(__DIR__, Git::EXCLUDE_LOCAL_BRANCHES, Git::EXCLUDE_REMOTE_BRANCHES);
     }
 
     /**
@@ -106,7 +106,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_patch_version_of_minor_version(): void
     {
-        self::assertNotEmpty($this->getGit()->getLastTagPatchVersionOf('1.0', __DIR__), 'Some last patch version to a minor version expected');
+        self::assertNotEmpty($this->getGit()->getLastPatchVersionOf('1.0', __DIR__), 'Some last patch version to a minor version expected');
     }
 
     /**
@@ -116,7 +116,7 @@ class GitTest extends TestCase
      */
     public function I_am_stopped_when_asking_for_last_patch_version_of_non_existing_minor_version(): void
     {
-        $this->getGit()->getLastTagPatchVersionOf('999.999', __DIR__);
+        $this->getGit()->getLastPatchVersionOf('999.999', __DIR__);
     }
 
     /**
@@ -124,7 +124,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_patch_version(): void
     {
-        self::assertNotEmpty($this->getGit()->getLastTagPatchVersion(__DIR__), 'Some last patch version expected');
+        self::assertNotEmpty($this->getGit()->getLastPatchVersion(__DIR__), 'Some last patch version expected');
     }
 
 }

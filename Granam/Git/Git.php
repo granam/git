@@ -151,7 +151,7 @@ class Git extends StrictObject
      * @return array|string[] List of tags with patch versions like 1.12.321
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getTagPatchVersions(string $dir): array
+    public function getPatchVersions(string $dir): array
     {
         $dirEscaped = \escapeshellarg($dir);
         $commands = [
@@ -171,7 +171,7 @@ class Git extends StrictObject
      * @throws \Granam\Git\Exceptions\LocalOrRemoteBranchesShouldBeRequired
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getAllMinorVersionLikeBranches(
+    public function getAllMinorVersions(
         string $dir,
         bool $readLocal = self::INCLUDE_LOCAL_BRANCHES,
         bool $readRemote = self::INCLUDE_REMOTE_BRANCHES
@@ -209,7 +209,7 @@ class Git extends StrictObject
         bool $readRemote = self::INCLUDE_REMOTE_BRANCHES
     ): ?string
     {
-        return $this->getAllMinorVersionLikeBranches($dir, $readLocal, $readRemote)[0] ?? null;
+        return $this->getAllMinorVersions($dir, $readLocal, $readRemote)[0] ?? null;
     }
 
     /**
@@ -219,9 +219,9 @@ class Git extends StrictObject
      * @throws \Granam\Git\Exceptions\NoPatchVersionsMatch
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getLastTagPatchVersionOf(string $superiorVersion, string $dir): string
+    public function getLastPatchVersionOf(string $superiorVersion, string $dir): string
     {
-        $patchVersions = $this->getTagPatchVersions($dir);
+        $patchVersions = $this->getPatchVersions($dir);
         $matchingPatchVersions = [];
         foreach ($patchVersions as $patchVersion) {
             if (\strpos($patchVersion, $superiorVersion) === 0) {
@@ -250,9 +250,9 @@ class Git extends StrictObject
      * @throws \Granam\Git\Exceptions\NoPatchVersionsMatch
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getLastTagPatchVersion(string $repositoryDir): string
+    public function getLastPatchVersion(string $repositoryDir): string
     {
-        return $this->getLastTagPatchVersionOf($this->getLastStableMinorVersion($repositoryDir), $repositoryDir);
+        return $this->getLastPatchVersionOf($this->getLastStableMinorVersion($repositoryDir), $repositoryDir);
     }
 
     /**
