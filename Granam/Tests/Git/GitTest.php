@@ -92,4 +92,30 @@ class GitTest extends TestCase
     {
         $this->getGit()->getAllMinorVersionLikeBranches(__DIR__, Git::EXCLUDE_LOCAL_BRANCHES, Git::EXCLUDE_REMOTE_BRANCHES);
     }
+
+    /**
+     * @test
+     */
+    public function I_can_get_last_stable_minor_version(): void
+    {
+        self::assertNotEmpty($this->getGit()->getLastStableMinorVersion(__DIR__), 'Some last stable minor version expected');
+    }
+
+    /**
+     * @test
+     */
+    public function I_can_get_last_patch_version(): void
+    {
+        self::assertNotEmpty($this->getGit()->getLastTagPatchVersionOf('1.0', __DIR__), 'Some last patch version expected');
+    }
+
+    /**
+     * @test
+     * @expectedException \Granam\Git\Exceptions\NoPatchVersionsMatch
+     * @expectedExceptionMessageRegExp ~999[.]999~
+     */
+    public function I_am_stopped_when_asking_for_last_patch_version_of_non_existing_minor_version(): void
+    {
+        $this->getGit()->getLastTagPatchVersionOf('999.999', __DIR__);
+    }
 }

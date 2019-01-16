@@ -165,40 +165,77 @@ class Git extends StrictObject
 
     /**
      * @param string $dir
-     * @param bool $local
-     * @param bool $remote
-     * @return array|string[] List of branches with minor versions like 1.12
+     * @param bool $readLocal
+     * @param bool $readRemote
+     * @return array|string[] List of branches with minor versions like 1.13, 1.12, sorted from newest to oldest
      * @throws \Granam\Git\Exceptions\LocalOrRemoteBranchesShouldBeRequired
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
     public function getAllMinorVersionLikeBranches(
         string $dir,
-        bool $local = self::INCLUDE_LOCAL_BRANCHES,
-        bool $remote = self::INCLUDE_REMOTE_BRANCHES
+        bool $readLocal = self::INCLUDE_LOCAL_BRANCHES,
+        bool $readRemote = self::INCLUDE_REMOTE_BRANCHES
     ): array
     {
-        if (!$local && !$remote) {
+        if (!$readLocal && !$readRemote) {
             throw new Exceptions\LocalOrRemoteBranchesShouldBeRequired(
                 'Excluding both local and remote version-like branches has no sense'
             );
         }
         $dirEscaped = \escapeshellarg($dir);
-        $localVersions = [
-            "git -C $dirEscaped branch",
+        $branchesCommandParts = [];
+        if ($readLocal) {
+            $branchesCommandParts[] = "git -C $dirEscaped branch";
+        }
+        if ($readRemote) {
+            $branchesCommandParts[] = "git -C $dirEscaped branch -r";
+        }
+        $branchesCommand = sprintf('branches=$(%s) && echo $branches', implode(' && ', $branchesCommandParts));
+        $commandParts = [
+            $branchesCommand,
             'cut -d "/" -f2',
             'grep HEAD --invert-match',
             'grep -P "v?\d+\.\d+" --only-matching',
+            'uniq',
             'sort --version-sort --reverse',
         ];
-        $remoteVersions = $localVersions;
-        $remoteVersions[0] = "git -C $dirEscaped branch -r";
 
-        return \array_unique(
-            \array_merge(
-                $this->executeArray(\implode(' | ', $localVersions)),
-                $this->executeArray(\implode(' | ', $remoteVersions))
-            )
-        );
+        return $this->executeArray(\implode(' | ', $commandParts));
+    }
+
+    public function getLastStableMinorVersion(
+        string $dir,
+        bool $readLocal = self::INCLUDE_LOCAL_BRANCHES,
+        bool $readRemote = self::INCLUDE_REMOTE_BRANCHES
+    ): ?string
+    {
+        return $this->getAllMinorVersionLikeBranches($dir, $readLocal, $readRemote)[0] ?? null;
+    }
+
+    /**
+     * @param string $superiorVersion
+     * @param string $dir
+     * @return string
+     * @throws \Granam\Git\Exceptions\NoPatchVersionsMatch
+     * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
+     */
+    public function getLastTagPatchVersionOf(string $superiorVersion, string $dir): string
+    {
+        $patchVersions = $this->getTagPatchVersions($dir);
+        $matchingPatchVersions = [];
+        foreach ($patchVersions as $patchVersion) {
+            if (\strpos($patchVersion, $superiorVersion) === 0) {
+                $matchingPatchVersions[] = $patchVersion;
+            }
+        }
+        if (!$matchingPatchVersions) {
+            throw new Exceptions\NoPatchVersionsMatch(
+                "No patch version matches given superior version $superiorVersion, available are only "
+                . ($patchVersions ? \implode(',', $patchVersions) : "'nothing'"));
+        }
+        \usort($matchingPatchVersions, 'version_compare');
+
+        return \end($matchingPatchVersions);
     }
 
     /**
