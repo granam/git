@@ -13,20 +13,20 @@ class Git extends StrictObject
     public const EXCLUDE_REMOTE_BRANCHES = false;
 
     /**
-     * @param string $dir
+     * @param string $repositoryDir
      * @return array|string[] Rows with GIT status
      * @throws \Granam\Git\Exceptions\CanNotGetGitStatus
      */
-    public function getGitStatus(string $dir): array
+    public function getGitStatus(string $repositoryDir): array
     {
         // GIT status is same for any working dir, if it is a sub-dir of wanted GIT project root
         try {
-            $escapedDir = \escapeshellarg($dir);
+            $escapedDir = \escapeshellarg($repositoryDir);
 
             return $this->executeArray("git -C $escapedDir status");
         } catch (Exceptions\ExecutingCommandFailed $executingCommandFailed) {
             throw new Exceptions\CanNotGetGitStatus(
-                "Can not get git status from dir $dir:\n"
+                "Can not get git status from dir $repositoryDir:\n"
                 . $executingCommandFailed->getMessage(),
                 $executingCommandFailed->getCode(),
                 $executingCommandFailed
@@ -35,14 +35,14 @@ class Git extends StrictObject
     }
 
     /**
-     * @param string $dir
+     * @param string $repositoryDir
      * @return array|string[] Rows with differences
      * @throws \Granam\Git\Exceptions\CanNotGetGitDiff
      */
-    public function getDiffAgainstOriginMaster(string $dir): array
+    public function getDiffAgainstOriginMaster(string $repositoryDir): array
     {
         try {
-            $escapedDir = \escapeshellarg($dir);
+            $escapedDir = \escapeshellarg($repositoryDir);
 
             return $this->executeArray("git -C $escapedDir diff origin/master");
         } catch (Exceptions\ExecutingCommandFailed $executingCommandFailed) {
@@ -56,13 +56,13 @@ class Git extends StrictObject
     }
 
     /**
-     * @param string $dir
+     * @param string $repositoryDir
      * @return string Last commit hash
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getLastCommitHash(string $dir): string
+    public function getLastCommitHash(string $repositoryDir): string
     {
-        $escapedDir = \escapeshellarg($dir);
+        $escapedDir = \escapeshellarg($repositoryDir);
 
         return $this->execute("git -C $escapedDir log --max-count=1 --format=%H --no-abbrev-commit");
     }
@@ -101,17 +101,17 @@ class Git extends StrictObject
 
     /**
      * @param string $branch
-     * @param string $dir
+     * @param string $repositoryDir
      * @return array|string[] Rows with result of branch update
      * @throws \Granam\Git\Exceptions\CanNotLocallyCloneWebVersionViaGit
      * @throws \Granam\Git\Exceptions\UnknownMinorVersion
      */
-    public function updateBranch(string $branch, string $dir): array
+    public function updateBranch(string $branch, string $repositoryDir): array
     {
         $branchEscaped = \escapeshellarg($branch);
-        $dirEscaped = \escapeshellarg($dir);
+        $repositoryDirEscaped = \escapeshellarg($repositoryDir);
         $commands = [];
-        $commands[] = "cd $dirEscaped";
+        $commands[] = "cd $repositoryDirEscaped";
         $commands[] = "git checkout $branchEscaped";
         $commands[] = 'git pull --ff-only';
         $commands[] = 'git pull --tags';
@@ -147,15 +147,15 @@ class Git extends StrictObject
     }
 
     /**
-     * @param string $dir
+     * @param string $repositoryDir
      * @return array|string[] List of tags with patch versions like 1.12.321
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getPatchVersions(string $dir): array
+    public function getAllPatchVersions(string $repositoryDir): array
     {
-        $dirEscaped = \escapeshellarg($dir);
+        $repositoryDirEscaped = \escapeshellarg($repositoryDir);
         $commands = [
-            "git -C $dirEscaped tag",
+            "git -C $repositoryDirEscaped tag",
             'grep -E "v?([[:digit:]]+[.]){2}[[:alnum:]]+([.][[:digit:]]+)?" --only-matching',
             'sort --version-sort --reverse',
         ];
@@ -164,7 +164,7 @@ class Git extends StrictObject
     }
 
     /**
-     * @param string $dir
+     * @param string $repositoryDir
      * @param bool $readLocal
      * @param bool $readRemote
      * @return array|string[] List of branches with minor versions like 1.13, 1.12, sorted from newest to oldest
@@ -172,7 +172,7 @@ class Git extends StrictObject
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
     public function getAllMinorVersions(
-        string $dir,
+        string $repositoryDir,
         bool $readLocal = self::INCLUDE_LOCAL_BRANCHES,
         bool $readRemote = self::INCLUDE_REMOTE_BRANCHES
     ): array
@@ -182,13 +182,13 @@ class Git extends StrictObject
                 'Excluding both local and remote version-like branches has no sense'
             );
         }
-        $dirEscaped = \escapeshellarg($dir);
+        $repositoryDirEscaped = \escapeshellarg($repositoryDir);
         $branchesCommandParts = [];
         if ($readLocal) {
-            $branchesCommandParts[] = "git -C $dirEscaped branch";
+            $branchesCommandParts[] = "git -C $repositoryDirEscaped branch";
         }
         if ($readRemote) {
-            $branchesCommandParts[] = "git -C $dirEscaped branch -r";
+            $branchesCommandParts[] = "git -C $repositoryDirEscaped branch -r";
         }
         $branchesCommand = sprintf('branches=$(%s) && echo $branches', implode(' && ', $branchesCommandParts));
         $commandParts = [
@@ -204,24 +204,24 @@ class Git extends StrictObject
     }
 
     public function getLastStableMinorVersion(
-        string $dir,
+        string $repositoryDir,
         bool $readLocal = self::INCLUDE_LOCAL_BRANCHES,
         bool $readRemote = self::INCLUDE_REMOTE_BRANCHES
     ): ?string
     {
-        return $this->getAllMinorVersions($dir, $readLocal, $readRemote)[0] ?? null;
+        return $this->getAllMinorVersions($repositoryDir, $readLocal, $readRemote)[0] ?? null;
     }
 
     /**
      * @param string $superiorVersion
-     * @param string $dir
+     * @param string $repositoryDir
      * @return string
      * @throws \Granam\Git\Exceptions\NoPatchVersionsMatch
      * @throws \Granam\Git\Exceptions\ExecutingCommandFailed
      */
-    public function getLastPatchVersionOf(string $superiorVersion, string $dir): string
+    public function getLastPatchVersionOf(string $superiorVersion, string $repositoryDir): string
     {
-        $patchVersions = $this->getPatchVersions($dir);
+        $patchVersions = $this->getAllPatchVersions($repositoryDir);
         $matchingPatchVersions = [];
         foreach ($patchVersions as $patchVersion) {
             if (\strpos($patchVersion, $superiorVersion) === 0) {

@@ -56,9 +56,9 @@ class GitTest extends TestCase
     /**
      * @test
      */
-    public function I_can_get_patch_versions(): void
+    public function I_can_get_all_patch_versions(): void
     {
-        self::assertNotEmpty($this->getGit()->getPatchVersions(__DIR__));
+        self::assertNotEmpty($this->getGit()->getAllPatchVersions(__DIR__));
     }
 
     /**
