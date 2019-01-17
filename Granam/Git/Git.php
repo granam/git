@@ -216,9 +216,10 @@ class Git extends StrictObject
         if ($readRemote) {
             $branchesCommandParts[] = "git -C $repositoryDirEscaped branch -r 2>&1";
         }
-        $branchesCommand = sprintf('branches=$(%s) && echo $branches', implode(' && ', $branchesCommandParts));
+        $branches = $this->executeCommandsChainArray($branchesCommandParts);
+        $escapedBranches = \escapeshellarg(\implode("\n", $branches));
         $commands = [
-            $branchesCommand,
+            $escapedBranches,
             'cut -d "/" -f2',
             'grep HEAD --invert-match',
             'grep -P "v?\d+\.\d+" --only-matching',
