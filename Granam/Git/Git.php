@@ -177,7 +177,16 @@ class Git extends StrictObject
             'sort --version-sort --reverse',
         ];
 
-        return $this->executeArray(\implode(' | ', $commands));
+        return $this->executePipedArray($commands);
+    }
+
+    private function executePipedArray(array $commands)
+    {
+        foreach ($commands as &$command) {
+            $command .= ' 2>&1';
+        }
+
+        return $this->executeArray(\implode(' | ', $commands), false);
     }
 
     /**
@@ -202,13 +211,13 @@ class Git extends StrictObject
         $repositoryDirEscaped = \escapeshellarg($repositoryDir);
         $branchesCommandParts = [];
         if ($readLocal) {
-            $branchesCommandParts[] = "git -C $repositoryDirEscaped branch";
+            $branchesCommandParts[] = "git -C $repositoryDirEscaped branch 2>&1";
         }
         if ($readRemote) {
-            $branchesCommandParts[] = "git -C $repositoryDirEscaped branch -r";
+            $branchesCommandParts[] = "git -C $repositoryDirEscaped branch -r 2>&1";
         }
         $branchesCommand = sprintf('branches=$(%s) && echo $branches', implode(' && ', $branchesCommandParts));
-        $commandParts = [
+        $commands = [
             $branchesCommand,
             'cut -d "/" -f2',
             'grep HEAD --invert-match',
@@ -217,7 +226,7 @@ class Git extends StrictObject
             'sort --version-sort --reverse',
         ];
 
-        return $this->executeArray(\implode(' | ', $commandParts));
+        return $this->executePipedArray($commands);
     }
 
     public function getLastStableMinorVersion(
