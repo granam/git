@@ -98,7 +98,11 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_stable_minor_version(): void
     {
-        self::assertNotEmpty($this->getGit()->getLastStableMinorVersion(__DIR__), 'Some last stable minor version expected');
+        self::assertRegExp(
+            '~^v?\d+[.]\d+$~',
+            $this->getGit()->getLastStableMinorVersion(__DIR__),
+            'Some last stable minor version expected'
+        );
     }
 
     /**
@@ -106,7 +110,11 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_patch_version_of_minor_version(): void
     {
-        self::assertNotEmpty($this->getGit()->getLastPatchVersionOf('1.0', __DIR__), 'Some last patch version to a minor version expected');
+        self::assertRegExp(
+            '~^1[.]0[.]\d+$~',
+            $this->getGit()->getLastPatchVersionOf('1.0', __DIR__),
+            'Some last patch version to a minor version expected'
+        );
     }
 
     /**
@@ -124,7 +132,18 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_patch_version(): void
     {
-        self::assertNotEmpty($this->getGit()->getLastPatchVersion(__DIR__), 'Some last patch version expected');
+        self::assertRegExp(
+            '~^v?(\d+[.]){2}\d+$~',
+            $this->getGit()->getLastPatchVersion(__DIR__),
+            'Some last patch version expected'
+        );
     }
 
+    /**
+     * @test
+     */
+    public function I_can_get_current_branch_name(): void
+    {
+        self::assertRegExp('~^(master|v?(\d+[.]){2}\d+)$~', $this->getGit()->getCurrentBranchName(__DIR__));
+    }
 }

@@ -377,4 +377,25 @@ class Git extends StrictObject
         return \implode(' && ', $commands);
     }
 
+    public function getCurrentBranchName(string $repositoryDir): string
+    {
+        $escapedRepositoryDir = \escapeshellarg($repositoryDir);
+        $branchName = $this->executePiped([
+            "git -C $escapedRepositoryDir branch",
+            'grep "*"',
+            'cut -d "*" -f2',
+        ]);
+
+        return \trim($branchName);
+    }
+
+    private function executePiped(array $commands): string
+    {
+        foreach ($commands as &$command) {
+            $command .= ' 2>&1';
+        }
+
+        return $this->execute(\implode(' | ', $commands), false);
+    }
+
 }
