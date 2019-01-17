@@ -121,6 +121,23 @@ class Git extends StrictObject
     }
 
     /**
+     * @param string $repositoryDir
+     * @return array|string[] Rows with result of branch update
+     * @throws \Granam\Git\Exceptions\CanNotLocallyCloneWebVersionViaGit
+     * @throws \Granam\Git\Exceptions\UnknownMinorVersion
+     */
+    public function update(string $repositoryDir): array
+    {
+        $repositoryDirEscaped = \escapeshellarg($repositoryDir);
+        $commands = [];
+        $commands[] = "cd $repositoryDirEscaped";
+        $commands[] = 'git pull --ff-only';
+        $commands[] = 'git pull --tags';
+
+        return $this->executeCommandsChainArray($commands);
+    }
+
+    /**
      * @param string $branchName
      * @return bool
      * @throws \Granam\Git\Exceptions\CanNotFindOutRemoteBranches
@@ -305,7 +322,7 @@ class Git extends StrictObject
             throw new Exceptions\ExecutingCommandFailed(
                 "Error while executing '$command', expected return '0', got '$returnCode'"
                 . ($output !== null ?
-                    ("with output: '" . \implode("\n", $output) . "'")
+                    (" with output: '" . \implode("\n", $output) . "'")
                     : ''
                 ),
                 $returnCode
