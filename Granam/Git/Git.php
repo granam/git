@@ -140,7 +140,7 @@ class Git extends StrictObject
             try {
                 return $this->executeCommandsChainArray($commands);
             } catch (ExecutingCommandFailed $executingCommandFailed) {
-                if (\preg_match("'fatal: Unable to create '[^']+[.]lock': File exists[.]$", $executingCommandFailed->getMessage())) {
+                if (\preg_match("~'fatal: Unable to create '[^']+[.]lock': File exists[.]$~", $executingCommandFailed->getMessage())) {
                     \sleep($attempt); // some update currently proceeds
                     $attempt++;
                     continue;
