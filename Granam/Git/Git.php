@@ -149,7 +149,7 @@ class Git extends StrictObject
             try {
                 return $this->executeCommandsChainArray($commands);
             } catch (Exceptions\ExecutingCommandFailed $executingCommandFailed) {
-                if ($attempt === $maxAttempts) {
+                if ($attempt >= $maxAttempts) {
                     $uniquePreviousFailureMessages = array_unique($previousFailureMessages);
                     if (count($uniquePreviousFailureMessages) === 0) {
                         throw $executingCommandFailed;
