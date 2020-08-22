@@ -61,7 +61,7 @@ class Git extends StrictObject
         }
         if (static::isDetachedBranch($currentBranchName)) {
             throw new Exceptions\CanNotDiffDetachedBranch(
-                sprintf('Directory %s has a git branch %s, which is detached. Can not get diff against origin',
+                sprintf("Directory '%s' has a git branch '%s', which is detached. Can not get diff against origin.",
                     $repositoryDir,
                     $currentBranchName
                 )
