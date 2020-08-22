@@ -2,7 +2,7 @@
 
 namespace Granam\Git\Exceptions;
 
-class CanNotDiffDetachedBranch
+class CanNotDiffDetachedBranch extends GitProblem
 {
 
 }

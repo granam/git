@@ -44,13 +44,31 @@ class Git extends StrictObject
      * @param string $repositoryDir
      * @return array|string[] Rows with differences
      * @throws \Granam\Git\Exceptions\CanNotGetGitDiff
+     * @throws \Granam\Git\Exceptions\CanNotDiffDetachedBranch
      */
     public function getDiffAgainstOrigin(string $repositoryDir): array
     {
+        $escapedDir = escapeshellarg($repositoryDir);
         try {
-            $escapedDir = escapeshellarg($repositoryDir);
-            $escapedCurrentBranchName = escapeshellarg($this->getCurrentBranchName($repositoryDir));
-
+            $currentBranchName = $this->getCurrentBranchName($repositoryDir);
+        } catch (Exceptions\ExecutingCommandFailed $executingCommandFailed) {
+            throw new Exceptions\CanNotGetGitDiff(
+                "Can not get diff:\n"
+                . $executingCommandFailed->getMessage(),
+                $executingCommandFailed->getCode(),
+                $executingCommandFailed
+            );
+        }
+        if (static::isDetachedBranch($currentBranchName)) {
+            throw new Exceptions\CanNotDiffDetachedBranch(
+                sprintf('Directory %s has a git branch %s, which is detached. Can not get diff against origin',
+                    $repositoryDir,
+                    $currentBranchName
+                )
+            );
+        }
+        try {
+            $escapedCurrentBranchName = escapeshellarg($currentBranchName);
             return $this->executeArray("git -C $escapedDir diff origin/$escapedCurrentBranchName");
         } catch (Exceptions\ExecutingCommandFailed $executingCommandFailed) {
             throw new Exceptions\CanNotGetGitDiff(
@@ -60,6 +78,11 @@ class Git extends StrictObject
                 $executingCommandFailed
             );
         }
+    }
+
+    public static function isDetachedBranch(string $branchName): bool
+    {
+        return strpos($branchName, '(HEAD detached at ') === 0;
     }
 
     /**

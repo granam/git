@@ -2,6 +2,7 @@
 
 namespace Granam\Tests\Git;
 
+use Granam\Git\Exceptions\CanNotDiffDetachedBranch;
 use Granam\Git\Exceptions\ExecutingCommandFailed;
 use Granam\Git\Git;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,34 @@ class GitTest extends TestCase
     public function I_can_get_diff_against_origin(): void
     {
         self::assertIsArray($this->getGit()->getDiffAgainstOrigin(__DIR__));
+    }
+
+    /**
+     * @test
+     */
+    public function I_am_stopped_if_want_diff_for_detached_branch(): void
+    {
+        $testDir = sys_get_temp_dir() . '/' . uniqid('detached-branch-', true);
+        $escapedTestDir = escapeshellarg($testDir);
+        $this->runCommand(sprintf('mkdir -p %s', $escapedTestDir));
+        $this->runCommand(sprintf('git -C %s init', $escapedTestDir));
+        $this->runCommand(sprintf('echo foo > %s/foo.txt', $escapedTestDir));
+        $this->runCommand(sprintf('git -C %s add . && git -C %s commit -m "Foo"', $escapedTestDir, $escapedTestDir));
+        $this->runCommand(sprintf('echo bar > %s/bar.txt', $escapedTestDir));
+        $this->runCommand(sprintf('git -C %s add . && git -C %s commit -m "Bar"', $escapedTestDir, $escapedTestDir));
+        $this->runCommand(sprintf('git -C %s checkout HEAD^', $escapedTestDir));
+
+        $this->expectException(CanNotDiffDetachedBranch::class);
+        $this->expectExceptionMessageMatches(sprintf('~%s~', preg_quote($testDir, '~')));
+        $this->getGit()->getDiffAgainstOrigin($testDir);
+
+        $this->runCommand(sprintf('rm -fr %s', $escapedTestDir));
+    }
+
+    private function runCommand(string $command)
+    {
+        exec("$command 2>&1", $output, $return);
+        self::assertSame(0, $return, sprintf("Failed to run command '%s' with result:\n%s", $command, implode("\n", $output)));
     }
 
     /**
@@ -122,7 +151,7 @@ class GitTest extends TestCase
      */
     public function I_am_stopped_when_asking_for_last_patch_version_of_non_existing_minor_version(): void
     {
-        $this->expectExceptionMessageRegExp('~999[.]999~');
+        $this->expectExceptionMessageMatches('~999[.]999~');
         $this->expectException(\Granam\Git\Exceptions\NoPatchVersionsMatch::class);
         $this->getGit()->getLastPatchVersionOf('999.999', __DIR__);
     }
@@ -209,8 +238,7 @@ class GitTest extends TestCase
     public function It_will_try_to_restore_from_restorable_errors(string $errorMessage)
     {
         $maxAttempts = 5;
-        $git = new class($errorMessage, $maxAttempts) extends Git
-        {
+        $git = new class($errorMessage, $maxAttempts) extends Git {
             private $errorMessage;
             private $throwOnAttemptsLesserThan;
             private $attempt = 0;
