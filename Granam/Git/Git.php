@@ -59,6 +59,14 @@ class Git extends StrictObject
                 $executingCommandFailed
             );
         }
+        if ($currentBranchName === null) {
+            throw new Exceptions\CanNotGetGitDiff(
+                sprintf(
+                    "Can not get diff in a dir '%s' as there is no current branch (and probably no branch at all)",
+                    $repositoryDir
+                )
+            );
+        }
         if (static::isDetachedBranch($currentBranchName)) {
             throw new Exceptions\CanNotDiffDetachedBranch(
                 sprintf("Directory '%s' has a git branch '%s', which is detached. Can not get diff against origin.",
@@ -438,7 +446,7 @@ class Git extends StrictObject
         return implode(' && ', $commands);
     }
 
-    public function getCurrentBranchName(string $repositoryDir): string
+    public function getCurrentBranchName(string $repositoryDir): ?string
     {
         $escapedRepositoryDir = escapeshellarg($repositoryDir);
         $branchName = $this->executePiped([
@@ -447,7 +455,10 @@ class Git extends StrictObject
             'cut -d "*" -f2',
         ]);
 
-        return trim($branchName);
+        $currentBranchName = trim($branchName);
+        return $currentBranchName !== ''
+            ? $currentBranchName
+            : null;
     }
 
     private function executePiped(array $commands): string

@@ -3,12 +3,27 @@
 namespace Granam\Tests\Git;
 
 use Granam\Git\Exceptions\CanNotDiffDetachedBranch;
+use Granam\Git\Exceptions\CanNotGetGitDiff;
 use Granam\Git\Exceptions\ExecutingCommandFailed;
 use Granam\Git\Git;
 use PHPUnit\Framework\TestCase;
 
 class GitTest extends TestCase
 {
+
+    private $temporaryDir;
+    private $temporaryOriginDir;
+
+    protected function tearDown(): void
+    {
+        if ($this->temporaryDir) {
+            exec(sprintf('rm -fr %s', escapeshellarg($this->temporaryDir)));
+        }
+        if ($this->temporaryOriginDir) {
+            exec(sprintf('rm -fr %s', escapeshellarg($this->temporaryOriginDir)));
+        }
+    }
+
     /**
      * @test
      */
@@ -35,8 +50,8 @@ class GitTest extends TestCase
      */
     public function I_am_stopped_if_want_diff_for_detached_branch(): void
     {
-        $testDir = sys_get_temp_dir() . '/' . uniqid('detached-branch-', true);
-        $escapedTestDir = escapeshellarg($testDir);
+        $this->temporaryDir = sys_get_temp_dir() . '/' . uniqid('detached-branch-', true);
+        $escapedTestDir = escapeshellarg($this->temporaryDir);
         $this->runCommand(sprintf('mkdir -p %s', $escapedTestDir));
         $this->runCommand(sprintf('git -C %s init', $escapedTestDir));
         $this->runCommand(sprintf('echo foo > %s/foo.txt', $escapedTestDir));
@@ -46,16 +61,29 @@ class GitTest extends TestCase
         $this->runCommand(sprintf('git -C %s checkout HEAD^', $escapedTestDir));
 
         $this->expectException(CanNotDiffDetachedBranch::class);
-        $this->expectExceptionMessageMatches(sprintf('~%s~', preg_quote($testDir, '~')));
-        $this->getGit()->getDiffAgainstOrigin($testDir);
-
-        $this->runCommand(sprintf('rm -fr %s', $escapedTestDir));
+        $this->expectExceptionMessageMatches(sprintf('~%s~', preg_quote($this->temporaryDir, '~')));
+        $this->getGit()->getDiffAgainstOrigin($this->temporaryDir);
     }
 
     private function runCommand(string $command)
     {
         exec("$command 2>&1", $output, $return);
         self::assertSame(0, $return, sprintf("Failed to run command '%s' with result:\n%s", $command, implode("\n", $output)));
+    }
+
+    /**
+     * @test
+     */
+    public function I_am_stopped_if_want_diff_on_git_repository_without_commit(): void
+    {
+        $this->temporaryDir = sys_get_temp_dir() . '/' . uniqid('no-commit-yet-', true);
+        $escapedTestDir = escapeshellarg($this->temporaryDir);
+        $this->runCommand(sprintf('mkdir -p %s', $escapedTestDir));
+        $this->runCommand(sprintf('git -C %s init', $escapedTestDir));
+
+        $this->expectException(CanNotGetGitDiff::class);
+        $this->expectExceptionMessageMatches(sprintf('~%s~', preg_quote($this->temporaryDir, '~')));
+        $this->getGit()->getDiffAgainstOrigin($this->temporaryDir);
     }
 
     /**
@@ -127,7 +155,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_stable_minor_version(): void
     {
-        self::assertRegExp(
+        self::assertMatchesRegularExpression(
             '~^v?\d+[.]\d+$~',
             $this->getGit()->getLastStableMinorVersion(__DIR__),
             'Some last stable minor version expected'
@@ -139,7 +167,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_patch_version_of_minor_version(): void
     {
-        self::assertRegExp(
+        self::assertMatchesRegularExpression(
             '~^1[.]0[.]\d+$~',
             $this->getGit()->getLastPatchVersionOf('1.0', __DIR__),
             'Some last patch version to a minor version expected'
@@ -161,7 +189,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_patch_version(): void
     {
-        self::assertRegExp(
+        self::assertMatchesRegularExpression(
             '~^v?(\d+[.]){2}\d+$~',
             $this->getGit()->getLastPatchVersion(__DIR__),
             'Some last patch version expected'
@@ -173,7 +201,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_current_branch_name(): void
     {
-        self::assertRegExp('~^(master|v?\d+[.]\d+)$~', $this->getGit()->getCurrentBranchName(__DIR__));
+        self::assertMatchesRegularExpression('~^(master|v?\d+[.]\d+)$~', $this->getGit()->getCurrentBranchName(__DIR__));
     }
 
     /**
@@ -182,10 +210,10 @@ class GitTest extends TestCase
     public function It_can_detect_lock()
     {
         $tempDir = sys_get_temp_dir();
-        $tempGitDir = $tempDir . '/' . uniqid('git_lock_test', true);
-        $tempGitOriginDir = $tempDir . '/' . uniqid('git_origin_lock_test', true);
-        $tempGitOriginDirEscaped = escapeshellarg($tempGitOriginDir);
-        $tempGitDirEscaped = escapeshellarg($tempGitDir);
+        $this->temporaryDir = $tempDir . '/' . uniqid('git_lock_test', true);
+        $this->temporaryOriginDir = $tempDir . '/' . uniqid('git_origin_lock_test', true);
+        $tempGitOriginDirEscaped = escapeshellarg($this->temporaryOriginDir);
+        $tempGitDirEscaped = escapeshellarg($this->temporaryDir);
         $commands = [
             "mkdir $tempGitDirEscaped",
             "cd $tempGitDirEscaped",
@@ -223,10 +251,10 @@ class GitTest extends TestCase
 
         $git = new Git(0 /* instant "sleep" */);
         try {
-            $git->update($tempGitDir);
+            $git->update($this->temporaryDir);
         } catch (ExecutingCommandFailed $executingCommandFailed) {
-            unlink("$tempGitDir/.git/refs/remotes/origin/master.lock");
-            $git->update($tempGitDir);
+            unlink("$this->temporaryDir/.git/refs/remotes/origin/master.lock");
+            $git->update($this->temporaryDir);
         }
     }
 
