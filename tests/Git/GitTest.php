@@ -7,6 +7,7 @@ use Granam\Git\Exceptions\CanNotGetGitDiff;
 use Granam\Git\Exceptions\ExecutingCommandFailed;
 use Granam\Git\Git;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Process\Process;
 
 class GitTest extends TestCase
 {
@@ -115,7 +116,47 @@ class GitTest extends TestCase
      */
     public function I_can_get_all_patch_versions(): void
     {
-        self::assertNotEmpty($this->getGit()->getAllPatchVersions(__DIR__));
+        $this->temporaryDir = sys_get_temp_dir() . '/' . uniqid('testing dir to get Git repo without patch versions ', true);
+        if (!@mkdir($this->temporaryDir)) {
+            self::fail("Can not create dir '$this->temporaryDir'");
+        }
+        $gitInit = new Process(['git', 'init'], $this->temporaryDir);
+        $exitStatus = $gitInit->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not initialize testing Git repository: %s', $gitInit->getErrorOutput()));
+
+        $touch = new Process(['touch', 'first-file'], $this->temporaryDir);
+        $exitStatus = $touch->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not touch a file in a dir %s: %s', $this->temporaryDir, $touch->getErrorOutput()));
+
+        $gitAdd = new Process(['git', 'add', '.'], $this->temporaryDir);
+        $exitStatus = $gitAdd->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not add files to a repository: %s', $gitAdd->getErrorOutput()));
+
+        $gitCommit = new Process(['git', 'commit', '--message', 'My first'], $this->temporaryDir);
+        $exitStatus = $gitCommit->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not commit: %s', $gitCommit->getErrorOutput()));
+
+        $gitNoiseBeforeAndAfterTag = new Process(['git', 'tag', 'noisev21.3.458after'], $this->temporaryDir);
+        $exitStatus = $gitNoiseBeforeAndAfterTag->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not add a tag: %s', $gitNoiseBeforeAndAfterTag->getErrorOutput()));
+
+        $gitNoiseAfterTag = new Process(['git', 'tag', 'v1.3.458after'], $this->temporaryDir);
+        $exitStatus = $gitNoiseAfterTag->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not add a tag: %s', $gitNoiseAfterTag->getErrorOutput()));
+
+        $gitNoiseBeforeTag = new Process(['git', 'tag', 'noisev2.3.458'], $this->temporaryDir);
+        $exitStatus = $gitNoiseBeforeTag->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not add a tag: %s', $gitNoiseBeforeTag->getErrorOutput()));
+
+        $gitPrefixedVersionTag = new Process(['git', 'tag', 'v3.3.458'], $this->temporaryDir);
+        $exitStatus = $gitPrefixedVersionTag->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not add a tag: %s', $gitPrefixedVersionTag->getErrorOutput()));
+
+        $gitNumericVersionTag = new Process(['git', 'tag', '4.3.458'], $this->temporaryDir);
+        $exitStatus = $gitNumericVersionTag->run();
+        self::assertSame(0, $exitStatus, sprintf('Can not add a tag: %s', $gitNumericVersionTag->getErrorOutput()));
+
+        self::assertSame(['v3.3.458', '4.3.458'], $this->getGit()->getAllPatchVersions($this->temporaryDir));
     }
 
     /**
@@ -126,9 +167,11 @@ class GitTest extends TestCase
      */
     public function I_can_get_all_minor_versions(bool $includeLocalBranches, bool $includeRemoteBranches): void
     {
+        $allMinorVersions = $this->getGit()->getAllMinorVersions(__DIR__, $includeLocalBranches, $includeRemoteBranches);
         self::assertContains(
             '1.0',
-            $this->getGit()->getAllMinorVersions(__DIR__, $includeLocalBranches, $includeRemoteBranches)
+            $this->getGit()->getAllMinorVersions(__DIR__, $includeLocalBranches, $includeRemoteBranches),
+            sprintf('There are only minor versions %s', var_export($allMinorVersions, true))
         );
     }
 

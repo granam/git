@@ -27,7 +27,8 @@
     },
     "require-dev": {
         "granam/exceptions-hierarchy": "^5.0",
-        "phpunit/phpunit": "^9.4"
+        "phpunit/phpunit": "^9.4",
+        "symfony/process": "^5.1"
     },
     "config": {
         "sort-packages": true

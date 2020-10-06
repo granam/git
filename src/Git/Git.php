@@ -240,7 +240,7 @@ class Git extends StrictObject
         $repositoryDirEscaped = escapeshellarg($repositoryDir);
         $commands = [
             "git -C $repositoryDirEscaped tag",
-            'grep -E "v?([[:digit:]]+[.]){2}[[:alnum:]]+([.][[:digit:]]+)?" --only-matching',
+            'grep -E "^v?([[:digit:]]+[.]){2}[[:digit:]]+$" --only-matching',
             'sort --version-sort --reverse',
         ];
 
@@ -289,7 +289,7 @@ class Git extends StrictObject
             $escapedBranches,
             'cut -d "/" -f2',
             'grep HEAD --invert-match',
-            'grep -P "v?\d+\.\d+" --only-matching',
+            'grep -P "v?\d+\.\d+$" --only-matching',
             'uniq',
             'sort --version-sort --reverse',
         ];
