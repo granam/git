@@ -91,7 +91,7 @@ class GitTest extends TestCase
      */
     public function I_can_get_last_commit(): void
     {
-        $expectedLastCommit = trim(file_get_contents(__DIR__ . '/../../../.git/refs/heads/master'));
+        $expectedLastCommit = trim(file_get_contents(__DIR__ . '/../../.git/refs/heads/master'));
         self::assertSame($expectedLastCommit, $this->getGit()->getLastCommitHash(__DIR__));
     }
 
