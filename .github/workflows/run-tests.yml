@@ -29,8 +29,8 @@ jobs:
 
       - name: Configure git
         run: |
-          git config user.email "git.granam@example.com"
-          git config user.name "Git Granam"
+          git config --global user.email "git.granam@example.com"
+          git config --global user.name "Git Granam"
 
       - name: Run tests
         run: ./vendor/bin/phpunit
