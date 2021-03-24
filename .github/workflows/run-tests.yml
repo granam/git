@@ -12,7 +12,9 @@ jobs:
           fetch-depth: 0
 
       - name: Pull everything
-        run: git pull
+        run: |
+          git fetch
+          git pull --ff-only
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
