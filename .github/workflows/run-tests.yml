@@ -11,10 +11,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Pull everything
+      - name: Pull tags and ensure local branch 1.0
         run: |
           git fetch
           git pull --ff-only
+          git checkout 1.0
+          git checkout -
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2

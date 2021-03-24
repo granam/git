@@ -170,7 +170,7 @@ class GitTest extends TestCase
         $allMinorVersions = $this->getGit()->getAllMinorVersions(__DIR__, $includeLocalBranches, $includeRemoteBranches);
         self::assertContains(
             '1.0',
-            $this->getGit()->getAllMinorVersions(__DIR__, $includeLocalBranches, $includeRemoteBranches),
+            $allMinorVersions,
             sprintf('There are only minor versions %s', var_export($allMinorVersions, true))
         );
     }
