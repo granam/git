@@ -27,5 +27,10 @@ jobs:
       - name: Install dependencies
         run: composer install
 
+      - name: Configure git
+        run: |
+          git config user.email "git.granam@example.com"
+          git config user.name "Git Granam"
+
       - name: Run tests
         run: ./vendor/bin/phpunit
