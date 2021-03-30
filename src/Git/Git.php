@@ -328,7 +328,7 @@ class Git extends StrictObject
                     'No patch version matches given superior version %s, %s',
                     $superiorVersion,
                     $patchVersions
-                        ? 'available are only' . implode(',', $patchVersions)
+                        ? 'available are only ' . implode(',', $patchVersions)
                         : 'because there are no patch versions at all'
                 )
             );
